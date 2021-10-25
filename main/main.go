@@ -19,7 +19,7 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates, err := bot.GetUpdatesChan(u)
-	array_of_commands:=DB_command()
+	array_of_commands:= Get_command()
 
 	for update := range updates {
 
@@ -73,6 +73,54 @@ func main() {
 				reply="Ссылка уже есть"
 			}
 			msg :=tgbotapi.NewMessage(update.Message.Chat.ID,reply)
+			bot.Send(msg)
+		case "show_article":
+			st_name := update.Message.Text
+			//array_of_links := append(array_of_commands,st_name+"\n")
+			chek, array_of_links := Get_article(st_name)
+			if chek!=0{
+				replay := "Ошибка"
+				msg :=tgbotapi.NewMessage(update.Message.Chat.ID,replay)
+				bot.Send(msg)
+				break
+			}
+			buffer := bytes.Buffer{}
+			tmp :=1
+			for _,val:=range array_of_links{
+				buffer.WriteString(val)
+				if tmp==1{
+					buffer.WriteString(" - ")
+					tmp++
+				}else{
+					buffer.WriteString("\n")
+					tmp--
+				}
+			}
+			msg :=tgbotapi.NewMessage(update.Message.Chat.ID,buffer.String())
+			bot.Send(msg)
+		case "show_all_article":
+			//st_name := update.Message.Text
+			//array_of_links := append(array_of_commands,st_name+"\n")
+			chek,array_of_links := Get_all_article()
+			if chek!=0{
+				replay := "Ошибка"
+				msg :=tgbotapi.NewMessage(update.Message.Chat.ID,replay)
+				bot.Send(msg)
+				break
+			}
+			buffer := bytes.Buffer{}
+			tmp :=1
+			for _,val:=range array_of_links{
+				buffer.WriteString(val)
+				if tmp==1{
+					buffer.WriteString(" - ")
+					tmp++
+				}else{
+					buffer.WriteString("\n")
+					tmp--
+				}
+			}
+			msg :=tgbotapi.NewMessage(update.Message.Chat.ID,buffer.String())
 			bot.Send(msg)
 		}
 

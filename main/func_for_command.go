@@ -3,12 +3,11 @@ package main
 import (
 	"database/sql"
 	"log"
-	"strings"
 )
 
 var database *sql.DB
 
-func DB_command() []string{
+func Get_command() []string{
 	db, err := sql.Open("mysql", "root:1234@/productdb")
 
 	if err != nil {
@@ -83,91 +82,75 @@ func Create_link_article(message string)  int{
 	return 0
 }
 
-func splitting_string_and_delete_article(st string,del string) (string,string){
-	words := strings.Fields(st)
-	if len(words)==1{
-		return "",""
-	}
-	name := words[1]
-	i:=0
-	for index:=0; index<2;index++{
-		copy(words[i:],words[i+1:])
-		words[len(words)-1]=""
-		words=words[:len(words)-1]
-	}
-	resolt_string := strings.Join(words," ")
-	return name,resolt_string
-}
-
-func splitting_string_and_delete_link(st string,del string) (string,string,string){
-	words := strings.Fields(st)
-	if len(words)==1{
-		return "","",""
-	}
-	name := words[1]
-	link :=words[2]
-	i:=0
-	for index:=0; index<3;index++{
-		copy(words[i:],words[i+1:])
-		words[len(words)-1]=""
-		words=words[:len(words)-1]
-	}
-	resolt_string := strings.Join(words," ")
-	return name,link,resolt_string
-}
-func checking_title_article(article string) int{
+func Get_article(name_article string) (int,[]string){
+	name_article=splitting_string_name_article(name_article)
 	db, err := sql.Open("mysql", "root:1234@/productdb")
 	if err != nil {
 		panic(err)
-		return 1
+		//return 1, _ //поправить
 	}
-	rows, err := db.Query("SELECT name FROM productdb.article_bot")
+	if name_article == "" {
+		//return 3 //поправить
+	}
+	//от сюда правки
+	defer db.Close()
+	rows, err := db.Query("SELECT link,description FROM productdb.article_bot_links WHERE name_article_bot=?",name_article)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
-	name_from_db := []string{}
-	tmp := ""
-	for rows.Next() {
-		err := rows.Scan(&tmp)
-		if err != nil {
+	article_link := []Article_link{}
+
+	for rows.Next(){
+		tmp := Article_link{}
+		err := rows.Scan(&tmp.link,&tmp.description)
+		if err != nil{
 			log.Println(err)
+			continue
 		}
-		name_from_db=append(name_from_db,tmp)
+		article_link = append(article_link, tmp)
 	}
-	for _,name_db := range name_from_db{
-		if name_db==article{
-			return 3
-		}
+	array := []string{}
+	for _, link := range article_link {
+		array=append(array,"Ссылка = "+link.link+"\n")
+		array=append(array,"Описание: "+link.description+"\n\n")
 	}
-	return 0
+	return 0,array
 }
 
-func checking_link_article(link string)  int{
+func Get_all_article()(int,[]string){
+	error := []string{"error"}
 	db, err := sql.Open("mysql", "root:1234@/productdb")
 	if err != nil {
 		panic(err)
-		return 1
+		return 1, error
 	}
-	rows, err := db.Query("SELECT link FROM productdb.article_bot_links")
+	//от сюда правки
+	defer db.Close()
+	rows, err := db.Query("SELECT name FROM productdb.article_bot ")
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
-	name_from_db := []string{}
-	tmp := ""
-	for rows.Next() {
+	name_article:= []string{}
+
+	for rows.Next(){
+		tmp := ""
 		err := rows.Scan(&tmp)
-		if err != nil {
+		if err != nil{
 			log.Println(err)
+			continue
 		}
-		name_from_db=append(name_from_db,tmp)
+		name_article = append(name_article, tmp)
 	}
-	for _,name_db := range name_from_db{
-		if name_db==link{
-			return 3
-		}
+	resolt_data := []string{}
+	for idx,name := range name_article{
+		resolt_data = append(resolt_data,"Материалы по "+name_article[idx]+"\n ------------- \n")
+		_, tmp :=Get_article("/command "+name)
+		resolt_data = append(resolt_data,tmp...)
 	}
-	return 0
+	return 0,resolt_data
 }
+
+
 

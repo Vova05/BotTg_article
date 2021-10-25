@@ -12,8 +12,6 @@ type Article struct {
 }
 
 type Article_link struct {
-	id_article_link int
-	name_article string
 	description string
 	link string
 }
